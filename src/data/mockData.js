@@ -1,17 +1,20 @@
-export const initialWeatherStats = {
-  humidity: "68%",
-  cropGrowth: "240 kg harvested (+5%)",
-  temp: "29°C",
-  condition: "Partly Cloudy",
-};
+// src/data/mockData.js
 
-export const weatherChartData = [
-  { day: "Day 1", temp: 27, humidity: 62, growth: 180 },
-  { day: "Day 2", temp: 30, humidity: 65, growth: 210 },
-  { day: "Day 3 (Today)", temp: 29, humidity: 68, growth: 240 },
+export const initialCrops = [
+  { id: "C1", name: "Wheat (Gandum)", field: "North Field A", healthScore: 85, status: "Healthy", cuttingDate: "2026-10-25", harvestQty: 500, stockRemaining: 350 },
+  { id: "C2", name: "Rice (Chawal)", field: "South Field B", healthScore: 62, status: "Needs Attention", cuttingDate: "2026-10-20", harvestQty: 400, stockRemaining: 120 },
+  { id: "C3", name: "Corn (Makai)", field: "East Field C", healthScore: 40, status: "Critical", cuttingDate: "2026-10-18", harvestQty: 300, stockRemaining: 50 },
+  { id: "C4", name: "Sugarcane (Ganna)", field: "West Field D", healthScore: 92, status: "Healthy", cuttingDate: "2026-11-05", harvestQty: 800, stockRemaining: 600 }
 ];
 
-export const initialOrders = [
-  { id: 1, supplierName: "Green Harvest Ltd", cropName: "Wheat Seeds", quantity: "50 Bags", date: "2026-10-10", status: "Delivered" },
-  { id: 2, supplierName: "Agri Input Co.", cropName: "Fertilizer Urea", quantity: "20 Bags", date: "2026-10-11", status: "Pending" },
+export const initialBuyers = [
+  {
+    id: "B1",
+    name: "Muhammad Ali",
+    cnic: "35202-1234567-1",
+    cropName: "Wheat (Gandum)",
+    quantity: 150,
+    date: "2026-10-12",
+    imageBase64: ""
+  }
 ];
