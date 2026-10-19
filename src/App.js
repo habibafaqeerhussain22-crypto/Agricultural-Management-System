@@ -8,6 +8,7 @@ import CuttingSchedule from "./components/dashboard/CuttingSchedule";
 import ThreeDayGraph from "./components/dashboard/ThreeDayGraph";
 import BuyerForm from "./components/buyers/BuyerForm";
 import AdminPage from "./pages/AdminPage";
+import EnterpriseDashboard from "./components/dashboard/EnterpriseDashboard";
 
 import { useWeather } from "./hooks/useWeather";
 import { getLocalStorageData, setLocalStorageData } from "./services/storageService";
@@ -57,6 +58,10 @@ export default function App() {
           {/* 1. DASHBOARD VIEW */}
           {activeTab === "dashboard" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              
+              {/* Yahan Enterprise Dashboard add kar diya gaya hai */}
+              <EnterpriseDashboard crops={crops} buyers={buyers} />
+
               <div style={styles.gridTop}>
                 <WeatherCard weather={weatherData} loading={loading} error={error} />
                 <HumidityGauge humidity={weatherData?.humidity} />
