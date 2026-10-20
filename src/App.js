@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
+import LandingPage from "./components/common/LandingPage";
 import WeatherCard from "./components/dashboard/WeatherCard";
 import HumidityGauge from "./components/dashboard/HumidityGauge";
 import CropHealthList from "./components/dashboard/CropHealthList";
-import CuttingSchedule from "./components/dashboard/CuttingSchedule";
+import CuttingSchedule from "./components/common/CuttingSchedule";
 import ThreeDayGraph from "./components/dashboard/ThreeDayGraph";
 import BuyerForm from "./components/buyers/BuyerForm";
 import AdminPage from "./pages/AdminPage";
 import EnterpriseDashboard from "./components/dashboard/EnterpriseDashboard";
+import HarvestSummary from "./components/harvest/HarvestSummary";
 
 import { useWeather } from "./hooks/useWeather";
 import { getLocalStorageData, setLocalStorageData } from "./services/storageService";
 import { initialCrops, initialBuyers } from "./data/mockData";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("home");
   const { weatherData, loading, error } = useWeather();
 
   const [crops, setCrops] = useState(() => getLocalStorageData("agri_crops", initialCrops));
   const [buyers, setBuyers] = useState(() => getLocalStorageData("agri_buyers", initialBuyers));
+  const [orders, setOrders] = useState(() => getLocalStorageData("agri_orders", []));
 
   useEffect(() => {
     setLocalStorageData("agri_crops", crops);
@@ -29,17 +32,21 @@ export default function App() {
     setLocalStorageData("agri_buyers", buyers);
   }, [buyers]);
 
+  useEffect(() => {
+    setLocalStorageData("agri_orders", orders);
+  }, [orders]);
+
   const handleAddBuyer = (newBuyer) => {
     const buyerWithStatus = { ...newBuyer, status: "Pending" };
     setBuyers([buyerWithStatus, ...buyers]);
     setCrops((prevCrops) =>
       prevCrops.map((c) =>
         c.id === newBuyer.cropId
-          ? { ...c, stockRemaining: c.stockRemaining - newBuyer.quantity }
+          ? { ...c, stockRemaining: Math.max(0, c.stockRemaining - newBuyer.quantity) }
           : c
       )
     );
-    alert("Buyer Record Successfully Registered!");
+    alert("Buyer record successfully registered.");
   };
 
   const handleStatusChange = (buyerId, newStatus) => {
@@ -55,12 +62,16 @@ export default function App() {
       <main style={styles.mainContent}>
         <div style={styles.container}>
           
-          {/* 1. DASHBOARD VIEW */}
+          {/* 1. LANDING PAGE VIEW */}
+          {activeTab === "home" && (
+            <LandingPage onNavigate={setActiveTab} />
+          )}
+
+          {/* 2. DASHBOARD VIEW */}
           {activeTab === "dashboard" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              
-              {/* Yahan Enterprise Dashboard add kar diya gaya hai */}
               <EnterpriseDashboard crops={crops} buyers={buyers} />
+              <HarvestSummary crops={crops} />
 
               <div style={styles.gridTop}>
                 <WeatherCard weather={weatherData} loading={loading} error={error} />
@@ -76,17 +87,24 @@ export default function App() {
             </div>
           )}
 
-          {/* 2. BUYER PORTAL VIEW */}
+          {/* 3. BUYER PORTAL VIEW */}
           {activeTab === "buyers" && (
             <div style={{ maxWidth: "750px", margin: "20px auto", width: "100%" }}>
               <BuyerForm crops={crops} onAddBuyer={handleAddBuyer} />
             </div>
           )}
 
-          {/* 3. ADMIN CONTROL PANEL VIEW */}
+          {/* 4. ADMIN CONTROL PANEL VIEW */}
           {activeTab === "admin" && (
-            <div style={{ margin: "20px 0" }}>
-              <AdminPage buyers={buyers} onStatusChange={handleStatusChange} />
+            <div style={{ margin: "10px 0" }}>
+              <AdminPage
+                buyers={buyers}
+                onStatusChange={handleStatusChange}
+                crops={crops}
+                setCrops={setCrops}
+                orders={orders}
+                setOrders={setOrders}
+              />
             </div>
           )}
 
@@ -103,13 +121,12 @@ const styles = {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    /* Clean Corporate Off-White Tone */
     background: "#f8fafc",
     fontFamily: "'Segoe UI', Roboto, -apple-system, sans-serif",
   },
   mainContent: {
+    padding: "30px 20px",
     flex: 1,
-    padding: "40px 20px",
   },
   container: {
     maxWidth: "1200px",

@@ -3,7 +3,6 @@ import React from "react";
 export default function Navbar({ activeTab, setActiveTab }) {
   return (
     <nav style={styles.navBar}>
-      {/* Brand Logo with Professional SVG Icon */}
       <div style={styles.brandContainer}>
         <div style={styles.logoIconBox}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -16,8 +15,13 @@ export default function Navbar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Navigation Menu on the Right */}
       <div style={styles.menu}>
+        <button
+          onClick={() => setActiveTab("home")}
+          style={activeTab === "home" ? styles.activeBtn : styles.btn}
+        >
+          Home
+        </button>
         <button
           onClick={() => setActiveTab("dashboard")}
           style={activeTab === "dashboard" ? styles.activeBtn : styles.btn}
