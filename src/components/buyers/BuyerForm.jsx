@@ -70,7 +70,7 @@ export default function BuyerForm({ crops, onAddBuyer }) {
     setQuantity("");
     setImagePreview("");
     setErrors({});
-    alert("Buyer record successfully saved.");
+    alert("Buyer Record Successfully Saved!");
   };
 
   return (

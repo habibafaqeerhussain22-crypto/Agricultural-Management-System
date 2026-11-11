@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
 import LandingPage from "./components/common/LandingPage";
@@ -8,51 +9,52 @@ import CropHealthList from "./components/dashboard/CropHealthList";
 import CuttingSchedule from "./components/common/CuttingSchedule";
 import ThreeDayGraph from "./components/dashboard/ThreeDayGraph";
 import BuyerForm from "./components/buyers/BuyerForm";
-import AdminPage from "./pages/AdminPage";
 import EnterpriseDashboard from "./components/dashboard/EnterpriseDashboard";
 import HarvestSummary from "./components/harvest/HarvestSummary";
 
-import { useWeather } from "./hooks/useWeather";
-import { getLocalStorageData, setLocalStorageData } from "./services/storageService";
-import { initialCrops, initialBuyers } from "./data/mockData";
+import LoginForm from "./components/auth/LoginForm";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import TaskForm from "./components/tasks/TaskForm";
+import TaskList from "./components/tasks/TaskList";
+import ExpenseForm from "./components/expenses/ExpenseForm";
+import ExpenseTable from "./components/expenses/ExpenseTable";
+import ProfitLossChart from "./components/expenses/ProfitLossChart";
+import InventoryForm from "./components/inventory/InventoryForm";
+import InventoryTable from "./components/inventory/InventoryTable";
+import ActivityLog from "./components/reports/ActivityLog";
+import ReportBuilder from "./components/reports/ReportBuilder";
+
+// [NEW] Workers & Equipment imports added safely
+import WorkerForm from "./components/workers/WorkerForm";
+import WorkerTable from "./components/workers/WorkerTable";
+import EquipmentForm from "./components/equipment/EquipmentForm";
+import EquipmentTable from "./components/equipment/EquipmentTable";
+
+import { fetchLiveWeather } from "./store/slices/weatherSlice";
+import { addBuyer } from "./store/slices/buyersSlice";
+import { updateCropStock } from "./store/slices/cropsSlice";
 
 export default function App() {
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("home");
-  const { weatherData, loading, error } = useWeather();
 
-  const [crops, setCrops] = useState(() => getLocalStorageData("agri_crops", initialCrops));
-  const [buyers, setBuyers] = useState(() => getLocalStorageData("agri_buyers", initialBuyers));
-  const [orders, setOrders] = useState(() => getLocalStorageData("agri_orders", []));
-
-  useEffect(() => {
-    setLocalStorageData("agri_crops", crops);
-  }, [crops]);
+  // Safe selectors with optional chaining to prevent undefined errors
+  const crops = useSelector((state) => state.crops?.list || []);
+  const buyers = useSelector((state) => state.buyers?.list || []);
+  const { data: weatherData, loading, error } = useSelector((state) => state.weather || {});
 
   useEffect(() => {
-    setLocalStorageData("agri_buyers", buyers);
-  }, [buyers]);
-
-  useEffect(() => {
-    setLocalStorageData("agri_orders", orders);
-  }, [orders]);
+    dispatch(fetchLiveWeather());
+    const interval = setInterval(() => {
+      dispatch(fetchLiveWeather());
+    }, 300000);
+    return () => clearInterval(interval);
+  }, [dispatch]);
 
   const handleAddBuyer = (newBuyer) => {
-    const buyerWithStatus = { ...newBuyer, status: "Pending" };
-    setBuyers([buyerWithStatus, ...buyers]);
-    setCrops((prevCrops) =>
-      prevCrops.map((c) =>
-        c.id === newBuyer.cropId
-          ? { ...c, stockRemaining: Math.max(0, c.stockRemaining - newBuyer.quantity) }
-          : c
-      )
-    );
-    alert("Buyer record successfully registered.");
-  };
-
-  const handleStatusChange = (buyerId, newStatus) => {
-    setBuyers(
-      buyers.map((b) => (b.id === buyerId ? { ...b, status: newStatus } : b))
-    );
+    dispatch(addBuyer(newBuyer));
+    dispatch(updateCropStock({ cropId: newBuyer.cropId, quantity: newBuyer.quantity }));
+    alert("Buyer record registered successfully with Redux!");
   };
 
   return (
@@ -62,12 +64,13 @@ export default function App() {
       <main style={styles.mainContent}>
         <div style={styles.container}>
           
-          {/* 1. LANDING PAGE VIEW */}
-          {activeTab === "home" && (
-            <LandingPage onNavigate={setActiveTab} />
-          )}
+          {/* 1. LANDING PAGE */}
+          {activeTab === "home" && <LandingPage onNavigate={setActiveTab} />}
 
-          {/* 2. DASHBOARD VIEW */}
+          {/* 2. LOGIN PAGE */}
+          {activeTab === "login" && <LoginForm />}
+
+          {/* 3. DASHBOARD */}
           {activeTab === "dashboard" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               <EnterpriseDashboard crops={crops} buyers={buyers} />
@@ -87,25 +90,74 @@ export default function App() {
             </div>
           )}
 
-          {/* 3. BUYER PORTAL VIEW */}
+          {/* 4. BUYER PORTAL */}
           {activeTab === "buyers" && (
             <div style={{ maxWidth: "750px", margin: "20px auto", width: "100%" }}>
               <BuyerForm crops={crops} onAddBuyer={handleAddBuyer} />
             </div>
           )}
 
-          {/* 4. ADMIN CONTROL PANEL VIEW */}
-          {activeTab === "admin" && (
-            <div style={{ margin: "10px 0" }}>
-              <AdminPage
-                buyers={buyers}
-                onStatusChange={handleStatusChange}
-                crops={crops}
-                setCrops={setCrops}
-                orders={orders}
-                setOrders={setOrders}
-              />
-            </div>
+          {/* 5. TASKS */}
+          {activeTab === "tasks" && (
+            <ProtectedRoute>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px" }}>
+                <TaskForm />
+                <TaskList />
+              </div>
+            </ProtectedRoute>
+          )}
+
+          {/* 6. EXPENSES */}
+          {activeTab === "expenses" && (
+            <ProtectedRoute>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <ProfitLossChart />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px" }}>
+                  <ExpenseForm />
+                  <ExpenseTable />
+                </div>
+              </div>
+            </ProtectedRoute>
+          )}
+
+          {/* 7. INVENTORY */}
+          {activeTab === "inventory" && (
+            <ProtectedRoute>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px" }}>
+                <InventoryForm />
+                <InventoryTable />
+              </div>
+            </ProtectedRoute>
+          )}
+
+          {/* 8. REPORTS */}
+          {activeTab === "reports" && (
+            <ProtectedRoute>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <ReportBuilder />
+                <ActivityLog />
+              </div>
+            </ProtectedRoute>
+          )}
+
+          {/* 9. WORKERS & LABOUR MANAGEMENT [NEW v2] */}
+          {activeTab === "workers" && (
+            <ProtectedRoute>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <WorkerForm />
+                <WorkerTable />
+              </div>
+            </ProtectedRoute>
+          )}
+
+          {/* 10. EQUIPMENT & MAINTENANCE TRACKER [NEW v2] */}
+          {activeTab === "equipment" && (
+            <ProtectedRoute>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <EquipmentForm />
+                <EquipmentTable />
+              </div>
+            </ProtectedRoute>
           )}
 
         </div>
@@ -117,30 +169,9 @@ export default function App() {
 }
 
 const styles = {
-  appWrapper: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    background: "#f8fafc",
-    fontFamily: "'Segoe UI', Roboto, -apple-system, sans-serif",
-  },
-  mainContent: {
-    padding: "30px 20px",
-    flex: 1,
-  },
-  container: {
-    maxWidth: "1200px",
-    margin: "0 auto",
-    width: "100%",
-  },
-  gridTop: {
-    display: "grid",
-    gridTemplateColumns: "2fr 1fr",
-    gap: "24px",
-  },
-  gridBottom: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "24px",
-  },
+  appWrapper: { minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc", fontFamily: "'Segoe UI', Roboto, sans-serif" },
+  mainContent: { padding: "30px 20px", flex: 1 },
+  container: { maxWidth: "1200px", margin: "0 auto", width: "100%" },
+  gridTop: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" },
+  gridBottom: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" },
 };
